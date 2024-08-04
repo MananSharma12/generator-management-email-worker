@@ -1,8 +1,3 @@
-```
-npm install
-npm run dev
-```
+## Mailing Worker for Generator Management App
 
-```
-npm run deploy
-```
+Creating a cloudflare worker to handle Sendgrid mails due to CORS limitation
