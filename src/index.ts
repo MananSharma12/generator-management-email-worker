@@ -28,10 +28,9 @@ app.post('/send', async (c) => {
 
     try {
         const response = await sgMail.send(message);
-        console.log("Email sent successfully:", response);
+        return c.json({ success: true, message: response }, 200)
     } catch (error) {
-        console.error("Error sending email:", error);
-        throw new Error("Failed to send email notification");
+        return c.json({ success: false, message: error }, 500)
     }
 })
 
