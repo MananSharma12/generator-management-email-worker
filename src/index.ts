@@ -1,48 +1,36 @@
-import {Hono} from 'hono'
+import express, {Request, Response} from "express";
+import sgMail from "@sendgrid/mail";
 
-type Bindings = {
-    SENDGRID_API_KEY: string
+sgMail.setApiKey(process.env.SENDGRID_API_KEY as string);
+
+const app = express();
+
+app.use(express.json());
+
+interface EmailRequestBody {
+    userEmail: string;
+    generatorInfo: string;
 }
 
-type HonoEnv = {
-    Bindings: Bindings
-}
-
-const app = new Hono<HonoEnv>()
-
-app.post('/send-email', async (c) => {
-    const {userEmail, generatorInfo} = await c.req.json()
+app.post("/send", async (req: Request, res: Response) => {
+    const {userEmail, generatorInfo}: EmailRequestBody = req.body;
 
     const message = {
-        personalizations: [{to: [{email: userEmail}]}],
-        from: {email: 'noreply@shreehps.gmail.com', name: 'Vijay Sharma'},
-        subject: 'Generator Service Due',
-        content: [
-            {
-                type: 'text/plain',
-                value: `Your generator ${generatorInfo} is due for service. Please schedule a service appointment as soon as possible.`
-            }
-        ]
-    }
+        to: userEmail,
+        from: "Vijay Sharma <noreply@shreehps@gmail.com>",
+        subject: "Generator Service Due",
+        text: `Your generator ${generatorInfo} is due for service. Please schedule a service appointment as soon as possible.`,
+    };
 
     try {
-        const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${c.env.SENDGRID_API_KEY}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(message)
-        })
-
-        if (!response.ok) {
-            throw new Error(`SendGrid API responded with status ${response.status}`)
-        }
-
-        return c.json({success: true, message: 'Email sent successfully'}, 200)
-    } catch (error) {
-        return c.json({success: false, message: 'Failed to send email notification'}, 500)
+        const response = await sgMail.send(message);
+        res.status(200).json({success: true, response});
+    } catch (error: any) {
+        res.status(500).json({success: false, error: error.message});
     }
-})
+});
 
-export default app
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
