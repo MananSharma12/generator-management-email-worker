@@ -1,21 +1,21 @@
-import express, {Request, Response} from "express";
+import { VercelRequest, VercelResponse } from "@vercel/node";
 import sgMail from "@sendgrid/mail";
 import dotenv from "dotenv";
 
 dotenv.config();
 sgMail.setApiKey(process.env.SENDGRID_API_KEY as string);
 
-const app = express();
-
-app.use(express.json());
-
 interface EmailRequestBody {
     userEmail: string;
     generatorInfo: string;
 }
 
-app.post("/send", async (req: Request, res: Response) => {
-    const {userEmail, generatorInfo}: EmailRequestBody = req.body;
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+    if (req.method !== "POST") {
+        return res.status(405).json({ message: "Method not allowed" });
+    }
+
+    const { userEmail, generatorInfo }: EmailRequestBody = req.body;
 
     const message = {
         to: userEmail,
@@ -26,13 +26,8 @@ app.post("/send", async (req: Request, res: Response) => {
 
     try {
         const response = await sgMail.send(message);
-        res.status(200).json({success: true, response});
+        return res.status(200).json({ success: true, response });
     } catch (error: any) {
-        res.status(500).json({success: false, error: error.message});
+        return res.status(500).json({ success: false, error: error.message });
     }
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+}
