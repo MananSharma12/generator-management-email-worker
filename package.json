@@ -8,7 +8,7 @@
     "dotenv": "^16.4.5"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "rm -rf dist && tsc",
     "start": "vercel dev",
     "deploy": "vercel --prod"
   },
